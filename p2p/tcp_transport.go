@@ -1,7 +1,6 @@
 package p2p
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"sync"
@@ -27,19 +26,17 @@ func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
 type TCPTransport struct {
 	listenAddress string
 	listener      net.Listener
-	shakeHands HandshakerFunc
-	decoder Decoder 
+	shakeHands    HandshakerFunc
+	decoder       Decoder
 
 	mu    sync.RWMutex
 	peers map[net.Addr]Peer
 }
 
-func 
-
 // NewTCPTransport initializes a TCP connection with a listen address and returns the TCP connection
 func NewTCPTransport(listenAddr string) *TCPTransport {
 	return &TCPTransport{
-		handshakeFunc: NOPHandshakeFunc,
+		shakeHands:    NOPHandshakeFunc,
 		listenAddress: listenAddr,
 	}
 }
@@ -69,9 +66,7 @@ func (t *TCPTransport) startAcceptLoop() {
 	}
 }
 
-type Temp struct {
-
-}
+type Temp struct{}
 
 func (t *TCPTransport) handleConn(conn net.Conn) {
 	peer := NewTCPPeer(conn, true) // NOTE: should be "false" i think
@@ -79,7 +74,9 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 	_ = peer
 
 	if err := t.shakeHands(conn); err != nil {
-
+		// if there is an error in the handshake, then we need to drop the connection
+		conn.Close()
+		return
 	}
 
 	// read loop
@@ -91,6 +88,4 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 		}
 		// msg := buf[:n]
 	}
-
-
 }
