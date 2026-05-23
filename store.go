@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -87,10 +88,14 @@ func (s *Store) Has(key string) bool {
 	fullPathWithOrigin := fmt.Sprintf("%s/%s", s.Origin, pathKey.FullPath())
 
 	_, err := os.Stat(fullPathWithOrigin)
-	if err == fs.ErrNotExist {
+	if errors.Is(err, fs.ErrNotExist) {
 		return false
 	}
 	return true
+}
+
+func (s *Store) Clear() error {
+	return os.RemoveAll(s.Origin)
 }
 
 func (s *Store) Delete(key string) error {
